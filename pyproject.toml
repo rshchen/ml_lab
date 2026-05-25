@@ -1,7 +1,7 @@
 [project]
-name = "ml-lab"
+name = "ml_lab"
 version = "0.1.0"
-description = "Add your description here"
+description = "My Handcrafted Machine Learning Library"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
@@ -9,3 +9,13 @@ dependencies = [
     "matplotlib>=3.10.9",
     "numpy>=2.4.6",
 ]
+
+[tool.uv]
+managed = true
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/ml_lab"]
