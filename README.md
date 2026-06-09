@@ -7,7 +7,7 @@
 - Deep Learning｜用 Python 進行深度學習的基礎理論實作/斎藤康毅
 # 檔案結構
 - 常會用到的函數整理到了 `src/ml_lab` 當中。
-- notebooks 是練習內容，根據魚書的內容和我認為重要的核心訓練整理如下：
+- notebooks 是練習內容，主要根據魚書的內容進行修改並且加入我認為重要的其他練習：
     - `perceptron.py` 實作了感知器 `and_gate, or_gate, nand_gate`，從數學上我們知道單層感知器只能得到線性分類器，但利用 `and, or, nand` 我們可以組合出多層感知器，實現非線性分類器，例如 `xor_gate`。
     - `activation_function.py` 隱藏層激勵函數實作，包含 matploblib 繪圖練習。
     - `softmax_bar.py` 輸出層激勵函數 softmax 實作，包含統計圖練習。
