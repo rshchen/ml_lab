@@ -19,3 +19,10 @@ def load_network(file_name: str = "sample_weight.pkl"):
         network = pickle.load(f)
         
     return network
+
+def numerical_diff(f, x, h=1e-4):
+    """
+    通用單變數數值微分 (中心差分)
+    預設使用黃金步長 h = 1e-4，確保在雙精度浮點數下壓制截斷誤差至 O(h^2)
+    """
+    return (f(x + h) - f(x - h)) / (2 * h)
