@@ -1,5 +1,6 @@
 import numpy as np
 from sklearn.datasets import fetch_openml
+from ml_lab.utils import load_network
 from ml_lab.activations import sigmoid, softmax
 
 # =====================================================================
@@ -61,12 +62,6 @@ def cross_entropy_error(y, t):
 # 輔助驗證與主程式
 # =====================================================================
 
-def init_network():
-    import pickle
-    with open("data/sample_weight.pkl", "rb") as f:
-        network = pickle.load(f)
-    return network
-
 def predict_batch(network, x):
     W1, W2, W3 = network['W1'], network['W2'], network['W3']
     b1, b2, b3 = network['b1'], network['b2'], network['b3']
@@ -82,7 +77,7 @@ if __name__ == "__main__":
     print(" 手刻 Mini-Batch 損失函數與隨機抽樣測試")
     print("========================================")
     
-    network = init_network()
+    network = load_network()
     print("正在載入 MNIST 數據...")
     mnist = fetch_openml("mnist_784", version=1, data_home="data/", as_frame=True)
     
