@@ -1,10 +1,25 @@
-# Python-generated files
-__pycache__/
-*.py[oc]
-build/
-dist/
-wheels/
-*.egg-info
+# ==========================================
+# Operating System Files
+# ==========================================
+# macOS 系統快取與縮圖
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon_
+._*
 
-# Virtual environments
-.venv
+# Windows 系統快取
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# ==========================================
+# IDE / Editor Files
+# ==========================================
+# VS Code 配置與快取
+.vscode/
+.history/
+*.code-workspace
+
+# JetBrains / PyCharm
+.idea/
