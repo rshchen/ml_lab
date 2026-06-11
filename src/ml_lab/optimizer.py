@@ -18,6 +18,6 @@ def gradient_descent(f, init_x, lr=0.1, step_num=100):
         grad = numerical_gradient_general(f, x)
         
         # 實作離散參數更新公式 W^(k+1) = W^(k) - η * ∇f
-        x = x - lr * grad
+        x -= lr * grad
         
     return x
