@@ -1,6 +1,6 @@
 import numpy as np
 from ml_lab.gradient import numerical_gradient_general
-from ml_lab.layers import AffineLayer
+from ml_lab.layers import AffineLayer, ReluLayer, SigmoidLayer
 
 class SimpleLossLayer:
     """
@@ -21,16 +21,20 @@ class SimpleLossLayer:
         dy = np.ones(self.y_shape) / M
         return dy * dout
 
-# 模擬全部函數合成的總函數
-def black_box(x_fixed, w_input, b_input, affine_node, loss_node):
-    affine_out = affine_node.forward(x_fixed, w_input, b_input)
-    loss = loss_node.forward(affine_out)
-    return loss
 
+# 模擬全部函數合成的總函數
+def black_box(x_fixed, w_input, b_input, affine_node, relu_node, sigmoid_node, loss_node):
+    affine_out = affine_node.forward(x_fixed, w_input, b_input)
+    relu_out = relu_node.forward(affine_out)
+    sigmoid_out = sigmoid_node.forward(relu_out)
+    loss = loss_node.forward(sigmoid_out)
+    return loss
 
 if __name__ == "__main__":
     # 建立節點
     affine_node = AffineLayer()
+    relu_node = ReluLayer()
+    sigmoid_node = SigmoidLayer()
     loss_node = SimpleLossLayer()
     # 宣告初始值 (3, 4)
     X_fixed = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]) # (2, 3)
@@ -47,11 +51,11 @@ if __name__ == "__main__":
     # 梯度下降
     for _ in range(10):
         w_num_grad = numerical_gradient_general(
-            lambda w: black_box(X_fixed, w, b_num, affine_node, loss_node),
+            lambda w: black_box(X_fixed, w, b_num, affine_node, relu_node, sigmoid_node, loss_node),
             w_num
         )
         b_num_grad = numerical_gradient_general(
-            lambda b: black_box(X_fixed, w_num, b, affine_node, loss_node),
+            lambda b: black_box(X_fixed, w_num, b, affine_node, relu_node, sigmoid_node, loss_node),
             b_num
         )
         w_num -= lr * w_num_grad
@@ -65,9 +69,13 @@ if __name__ == "__main__":
     for _ in range(10):
         # 先正向傳播
         affine_out = affine_node.forward(X_fixed, w_auto, b_auto)
-        loss = loss_node.forward(affine_out)
+        relu_out = relu_node.forward(affine_out)
+        sigmoid_out = sigmoid_node.forward(relu_out)
+        loss = loss_node.forward(sigmoid_out)
         # 反向求梯度
-        d_affine_out = loss_node.backward()
+        d_sigmoid_out = loss_node.backward()
+        d_relu_out = sigmoid_node.backward(d_sigmoid_out)
+        d_affine_out = relu_node.backward(d_relu_out)
         dx, dw, db = affine_node.backward(d_affine_out)
         # 梯度下降
         w_auto -= lr * dw
@@ -77,3 +85,5 @@ if __name__ == "__main__":
 
 
         
+
+
