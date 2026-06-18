@@ -1,5 +1,6 @@
 import numpy as np
 from ml_lab.activations import sigmoid, relu
+from ml_lab.losses import mean_squared_error
 
 class AffineLayer:
     def __init__(self):
@@ -40,5 +41,34 @@ class SigmoidLayer:
         dx = dout * y * (1 - y)
         return dx
     
+class MeanSquaredErrorLayer:
+    """
+    均方誤差 (Mean Squared Error) - 專治【回歸問題】
+    支援單筆 1D 向量與 Batch 2D 矩陣
+    
+    物理維度與格式限制：
+    1. 本函數「不支援」未轉換的分類數字標籤 (如 [2, 0, 4])。
+    2. 真實標籤 t 必須是與預測資料 y 格式完全一致的「浮點數矩陣」或「One-Hot 矩陣」。
+    3. 在回歸任務中，t 的數值代表真實的實數連續目標（如房價、坐標）。
 
+    為了不重複升維防線，因此這邊沒有直接 from ml_lab.losses import mean_squared_error
+    """
+    def __init__(self):
+        self.y = None
+        self.t = None
+    def forward(self, y, t):
+        # 升維防線
+        if y.ndim == 1:
+            y = y.reshape(1, -1)
+            t = t.reshape(1, -1)
+        self.y = y
+        self.t = t
+        sample_losses = 0.5 * np.sum((y - t) ** 2, axis=1)
 
+        out = np.mean(sample_losses)
+        return out
+    def backward(self, dout):
+        # 此時的 self.y 必定是 (Batch, Feature) 的 2D 矩陣
+        batch_size = self.y.shape[0]
+        dy = (self.y - self.t)/batch_size
+        return dy * dout
