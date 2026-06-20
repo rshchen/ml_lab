@@ -1,6 +1,6 @@
 import numpy as np
-from ml_lab.activations import sigmoid, relu
-from ml_lab.losses import mean_squared_error
+from ml_lab.activations import sigmoid, relu, softmax
+from ml_lab.losses import cross_entropy_error
 
 class AffineLayer:
     def __init__(self):
@@ -72,3 +72,38 @@ class MeanSquaredErrorLayer:
         batch_size = self.y.shape[0]
         dy = (self.y - self.t)/batch_size
         return dy * dout
+
+class SoftmaxWithCeeLayer:
+    def __init__(self):
+        self.y = None
+        self.t = None
+    def forward(self, x, t):
+        self.t = t
+        self.y = y = softmax(x)
+        loss = cross_entropy_error(y, t)
+        return loss
+    def backward(self, dout=1.0):
+        y = self.y
+        t = self.t
+        batch_size = 1 if y.ndim == 1 else y.shape[0]
+        
+        # 只要不是 One-Hot (尺寸不相等)，就代表是傳統數字標籤
+        if t.size != y.size:
+            t_one_hot = np.zeros_like(y)
+            # 當 y 是 1D (單筆) 時，batch_size=1，t_one_hot[t] 直接利用 1D 索引變為 1
+            # 當 y 是 2D (批次) 時，利用 np.arange 進行二維進階索引
+            if y.ndim == 1:
+                t_one_hot[t] = 1
+            else:
+                t_one_hot[np.arange(batch_size), t] = 1
+            t = t_one_hot
+            
+        dx = (y - t) / batch_size
+        return dx * dout
+
+
+
+
+
+        
+
