@@ -12,7 +12,7 @@ if __name__ == "__main__":
         "layer_name": "Hidden_Layer_1"
     }
     
-    # 1. 請填空：使用正確的二進位「寫入」模式，將字典打包存進硬碟
+    # 1. 使用正確的二進位「寫入」模式，將字典打包存進硬碟
     with open("data/my_test_weight.pkl", "wb") as f:
         pickle.dump(my_network, f)
         

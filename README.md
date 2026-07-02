@@ -64,7 +64,7 @@
 
 #### 4. `data_infra_tests/` — 資料基礎設施與環境測試
 
-* **`test_for_root_dir.py`**：驗證跨目錄調用時，相對路徑與專案根目錄（Root Directory）的解析合法性，確保資料讀取不卡死。
+* **`test_root_dir.py`**：驗證跨目錄調用時，相對路徑與專案根目錄（Root Directory）的解析合法性，確保資料讀取不卡死。
 * **`test_mnist_load.py`**：使用 SciKit-Learn 下載、解壓並快取 `mnist_784` 原始資料集。
 * **`test_mnist_visualize.py`**：使用 Matplotlib 將離散的一維 $1 \times 784$ 陣列重塑（`reshape`）為 $28 \times 28$ 像素矩陣並進行影像視覺化。
 * **`test_pickle_craft.py`**：二進位序列化練習，親手完成權重字典的 `pickle.dump` 與 `load` 封裝。
