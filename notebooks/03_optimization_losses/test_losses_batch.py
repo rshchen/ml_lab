@@ -91,8 +91,8 @@ if __name__ == "__main__":
     batch_mask = np.random.choice(train_size, batch_size, replace=False)
     print(f"隨機抽樣產生的 5 筆樣本索引: {batch_mask}")
     
-    # 6. 請填空：利用隨機索引陣列切出 Batch 區塊
-    X_batch = X_all[batch_mask, :]
+    # 6. 利用隨機索引陣列切出 Batch 區塊
+    X_batch = X_all[batch_mask]
     y_batch = y_all[batch_mask]
     
     X_batch_norm = X_batch / 255.0

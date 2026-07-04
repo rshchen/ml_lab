@@ -44,7 +44,7 @@ class TwoLayerNet:
         return np.sum(y == t) / batch_size
         
     def gradient(self, x, t):
-        # 1. 發動前向傳播，強迫各層內部節點動態記憶激活狀態與權重的矩陣肉體
+        # 1. 發動前向傳播，強迫各層內部節點動態記憶激活狀態與權重的矩陣
         self.loss(x, t)
         
         # 2. 收集梯度的容器
@@ -54,11 +54,15 @@ class TwoLayerNet:
         dout = 1.0
         dout = self.last_layer.backward(dout) 
         
-        # 4. 【請手動反向串接與精準攔截】
+        # 4. 【反向串接與精準攔截】
         # ===== 依序由後往前呼叫 backward，並當場攔截吐出的參數梯度 =====
         dout, grads['W2'], grads['b2'] = self.affine2.backward(dout)
         dout = self.relu1.backward(dout)
         _, grads['W1'], grads['b1'] = self.affine1.backward(dout)
+
+        # 在 return 前，發動一擊必殺的維度斷線重連：
+        grads['b1'] = grads['b1'].squeeze()  # 把 (1, 50) 溫和壓回 (50,)
+        grads['b2'] = grads['b2'].squeeze()  # 把 (1, 10) 溫和壓回 (10,)
 
         # =================================================================================
         return grads
