@@ -60,10 +60,5 @@ class TwoLayerNet:
         dout = self.relu1.backward(dout)
         _, grads['W1'], grads['b1'] = self.affine1.backward(dout)
 
-        # 在 return 前，發動一擊必殺的維度斷線重連：
-        grads['b1'] = grads['b1'].squeeze()  # 把 (1, 50) 溫和壓回 (50,)
-        grads['b2'] = grads['b2'].squeeze()  # 把 (1, 10) 溫和壓回 (10,)
-
-        # =================================================================================
         return grads
 

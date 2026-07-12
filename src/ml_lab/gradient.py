@@ -41,5 +41,5 @@ def numerical_gradient_general(f, x):
         # 座標還原，透過視圖維持原始陣列其餘維度不變
         x_flat[idx] = tmp_val
         
-    # 填空引導：將扁平化的梯度矩陣，還原成與輸入參數完全一致的幾何結構
+    # 將扁平化的梯度矩陣，還原成與輸入參數完全一致的幾何結構
     return grad_flat.reshape(original_shape)

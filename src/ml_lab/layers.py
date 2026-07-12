@@ -16,7 +16,7 @@ class AffineLayer:
     def backward(self, dout):
         dx = dout @ self.w.T
         dw = self.x.T @ dout
-        db = dout.sum(axis=0, keepdims=True)
+        db = dout.sum(axis=0)
         return dx, dw, db
     
 class ReluLayer:
