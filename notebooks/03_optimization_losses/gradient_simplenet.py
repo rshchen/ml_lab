@@ -2,7 +2,7 @@ import numpy as np
 from ml_lab.activations import softmax
 from ml_lab.losses import cross_entropy_error
 from ml_lab.gradient import numerical_gradient_general
-from ml_lab.optimizer import gradient_descent
+from ml_lab.optimizers import gradient_descent
 
 class SimpleNet:
     """單層權重神經網路模型"""

@@ -1,5 +1,5 @@
 import numpy as np
-from ml_lab.optimizer import gradient_descent
+from ml_lab.optimizers import gradient_descent
 
 def target_function_2d(x):
     """測試碗狀高維函數: f(x) = x00^2 + x01^2 + x10^2 + x11^2
