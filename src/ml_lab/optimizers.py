@@ -38,3 +38,22 @@ class Sgd:
             # 依據 SGD 代數公式實作參數原地更新 (維持形狀守恆)
             # ----------------------------------------------------------------
             params[key] -= self.lr * grads[key]
+
+
+class Momentum:
+    """動量優化器 (Momentum Optimization)"""
+    def __init__(self, lr=0.01, decay=0.9):
+        self.lr = lr
+        self.decay = decay  # 動量衰減/阻力係數
+        self.v = {}         # 儲存全域參數速度的字典
+        
+    def update(self, params, grads):
+        if not self.v:
+            for key, val in params.items():
+                self.v[key] = np.zeros_like(val)
+                
+        for key in params.keys():
+            # 1. 舊速度打折（因摩擦力衰減）並疊加當前負梯度加速度
+            self.v[key] = self.decay * self.v[key] - self.lr * grads[key]
+            # 2. 依據更新後的速度更新參數位置
+            params[key] += self.v[key]
