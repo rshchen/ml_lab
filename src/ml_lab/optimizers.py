@@ -57,3 +57,64 @@ class Momentum:
             self.v[key] = self.decay * self.v[key] - self.lr * grads[key]
             # 2. 依據更新後的速度更新參數位置
             params[key] += self.v[key]
+
+class AdaGrad:
+    """自適應學習率優化器 (Adaptive Gradient)"""
+    def __init__(self, lr=0.01):
+        self.lr = lr
+        self.h = {}  # 儲存全域參數梯度平方和的字典 (形狀與參數完全守恆)
+        
+    def update(self, params, grads):
+        """
+        params, grads: 與 SGD/Momentum 介面完全相同的參數與梯度字典
+        """
+        # 如果累積字典目前為空，說明是第一步前進，必須發動動態延遲初始化
+        if not self.h:
+            for key, val in params.items():
+                # ------------------------------------------------------------
+                # 根據參數的幾何形狀，初始化一模一樣的全零累積張量
+                # ------------------------------------------------------------
+                self.h[key] = np.zeros_like(val)
+                
+        for key in params.keys():
+            # ------------------------------------------------------------
+            # 依據 AdaGrad 累積與參數更新公式實作參數原地改命
+            # 1. 點對點累加梯度的平方到 self.h[key]
+            # 2. 計算自適應調整後的步長，並原地更新 params[key] (加上 1e-7 防止除以零)
+            # ------------------------------------------------------------
+            self.h[key] += np.square(grads[key])
+            params[key] -= self.lr * grads[key] / (np.sqrt(self.h[key]) + 1e-7)
+
+class Adam:
+    """終極完全體優化器 (Adam)"""
+    def __init__(self, lr=0.001, beta1=0.9, beta2=0.999):
+        self.lr = lr
+        self.beta1 = beta1
+        self.beta2 = beta2
+        self.iter = 0  # 追蹤當前的迭代步數 t
+        self.m = {}    # 一階矩緩衝字典 (速度)
+        self.v = {}    # 二階矩緩衝字典 (憤怒值)
+        
+    def update(self, params, grads):
+        if not self.m:
+            for key, val in params.items():
+                self.m[key] = np.zeros_like(val)
+                self.v[key] = np.zeros_like(val)
+                
+        # 步數計數器累加，用於偏差修正的指數計算
+        self.iter += 1
+        
+        # 計算偏差修正的係數項（已做代數合併）
+        lr_t = self.lr * np.sqrt(1.0 - self.beta2**self.iter) / (1.0 - self.beta1**self.iter)
+        
+        for key in params.keys():
+            # ------------------------------------------------------------
+            # 依據 Adam 公式更新一階矩 self.m 與二階矩 self.v
+            # ------------------------------------------------------------
+            self.m[key] = self.beta1 * self.m[key] + (1.0 - self.beta1) * grads[key]
+            self.v[key] = self.beta2 * self.v[key] + (1.0 - self.beta2) * np.square(grads[key])
+            
+            # ------------------------------------------------------------
+            # 結合偏差修正項 lr_t，實作終極參數主權原地更新
+            # ------------------------------------------------------------
+            params[key] -= lr_t * self.m[key] / (np.sqrt(self.v[key]) + 1e-7)

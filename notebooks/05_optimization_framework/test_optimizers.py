@@ -3,7 +3,7 @@ import numpy as np
 from ml_lab.dataset import load_mnist
 from ml_lab.models import TwoLayerNet
 # 隨著你開發進度，直接在這裡 import 新優化器
-from ml_lab.optimizers import Sgd, Momentum  # , AdaGrad, Adam
+from ml_lab.optimizers import Sgd, Momentum, AdaGrad, Adam
 
 if __name__ == "__main__":
     # 1. 載入 MNIST
@@ -14,8 +14,8 @@ if __name__ == "__main__":
     optimizers = {
         "SGD": Sgd(lr=0.01),
         "Momentum": Momentum(lr=0.01, decay=0.9),
-        # "AdaGrad": AdaGrad(lr=0.01),
-        # "Adam": Adam(lr=0.001)
+        "AdaGrad": AdaGrad(lr=0.01),
+        "Adam": Adam(lr=0.001)
     }
     
     # 3. 建立基礎網路
