@@ -2,12 +2,44 @@ import numpy as np
 from ml_lab.layers import AffineLayer, ReluLayer, SoftmaxWithCeeLayer
 
 class TwoLayerNet:
-    def __init__(self, input_size, hidden_size, output_size, weight_init_std=0.01):
+    def __init__(self, input_size, hidden_size, output_size, weight_init='he'):
+        """
+        TwoLayerNet 類別實作 (支援動態方差守恆初始化策略)
+        
+        Parameters:
+        -----------
+        input_size : int
+            輸入層維度 (n_in_bottom)
+        hidden_size : int
+            隱藏層維度
+        output_size : int
+            輸出層維度 (n_out_top)
+        weight_init : str or float
+            初始化策略 ('he', 'xavier', 或自訂常數 std，如 0.01)
+        """
         # 1. 權重參數主權一元化：通通鎖死在 self.params 字典中
         self.params = {}
-        self.params['W1'] = weight_init_std * np.random.randn(input_size, hidden_size)
+    
+        # 依據傳入策略計算各層權重之標準差 std (std = sqrt(Var))
+        if str(weight_init).lower() == 'he':
+            # He 初始化 (Kaiming Init): Var(W) = 2 / n_in
+            std_w1 = np.sqrt(2.0 / input_size)
+            std_w2 = np.sqrt(2.0 / hidden_size)
+        elif str(weight_init).lower() == 'xavier':
+            # Xavier 初始化: Var(W) = 1 / n_in
+            std_w1 = np.sqrt(1.0 / input_size)
+            std_w2 = np.sqrt(1.0 / hidden_size)
+        else:
+            # 純量常數初始化 (如原本的 0.01)
+            std_w1 = float(weight_init)
+            std_w2 = float(weight_init)
+    
+
+
+        # 套用具備方差守恆補償的權重初始化
+        self.params['W1'] = std_w1 * np.random.randn(input_size, hidden_size)
         self.params['b1'] = np.zeros(hidden_size)
-        self.params['W2'] = weight_init_std * np.random.randn(hidden_size, output_size)
+        self.params['W2'] = std_w2 * np.random.randn(hidden_size, output_size)
         self.params['b2'] = np.zeros(output_size)
         
         # 2. 【組裝純淨無狀態的算子元件】（如同 PyTorch nn.Module 宣告屬性）

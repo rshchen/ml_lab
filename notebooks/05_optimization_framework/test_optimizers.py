@@ -15,7 +15,7 @@ if __name__ == "__main__":
         "SGD": Sgd(lr=0.01),
         "Momentum": Momentum(lr=0.01, decay=0.9),
         "AdaGrad": AdaGrad(lr=0.01),
-        "Adam": Adam(lr=0.001)
+        "Adam": Adam(lr=0.01)
     }
     
     # 3. 建立基礎網路
