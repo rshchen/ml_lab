@@ -47,11 +47,15 @@ def load_mnist(normalize=True, one_hot=True):
 
     X, y = dataset['X'], dataset['y']
 
-    # 2. 【第二道防線：動態歸一化地貌】
+    # 2. 【第二道防線：Z-score 標準化（Zero-mean & Unit-variance）】
     if normalize:
-        # ===== 將 0~255 的像素投射至 0.0~1.0 幾何區間 =====
+        # Step 1: 先將 0~255 像素投射至 0.0~1.0 區間
         X = (X / 255.0).astype(np.float32)
-        # =============================================================
+        
+        # Step 2: 使用訓練集統計產出的官方全域常數，精確對齊 E[x] = 0, Var(x) = 1
+        mean = 0.1307
+        std = 0.3081
+        X = (X - mean) / std
 
     # 3. 【第三道防線：進階二維索引無迴圈 One-Hot 化】
     if one_hot:
