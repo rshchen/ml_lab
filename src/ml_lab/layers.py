@@ -102,6 +102,66 @@ class SoftmaxWithCeeLayer:
         return dx * dout
 
 
+class BatchNormalization:
+    def __init__(self, gamma, beta, momentum=0.9, eps=1e-5):
+        self.gamma = gamma          # 縮放參數 (D,)
+        self.beta = beta            # 平移參數 (D,)
+        self.momentum = momentum    # 移動平均衰減率 (EMA)
+        self.eps = eps              # 數值穩定項
+
+        # 推論時使用的全域統計量 (Running Mean / Var)
+        self.running_mean = None
+        self.running_var = None
+
+        # 反向傳播快取
+        self.cache = None
+
+    def forward(self, x, is_train=True):
+        N, D = x.shape
+        
+        if self.running_mean is None:
+            self.running_mean = np.zeros(D)
+            self.running_var = np.ones(D)
+
+        if is_train:
+            # 計算當前 Batch 的均值與中心化矩陣 xc
+            mu = np.mean(x, axis=0)
+            xc = x - mu
+
+            # 計算當前 Batch 的方差與標準差
+            var = np.mean(xc**2, axis=0)
+            std = np.sqrt(var + self.eps)
+
+            # 計算標準化特徵 xn 與縮放平移的最終輸出 out
+            xn = xc / std
+            out = self.gamma * xn + self.beta
+
+            # 更新全域指數移動平均 (EMA) 統計量
+            # 若 self.momentum = 0.9 (Decay rate)
+            self.running_mean = self.momentum * self.running_mean + (1 - self.momentum) * mu
+            self.running_var = self.momentum * self.running_var + (1 - self.momentum) * var
+
+            self.cache = (xc, xn, std, N)
+        else:
+            # 填寫推論階段的中心化與標準化流程
+            xc = x - self.running_mean
+            xn = xc / np.sqrt(self.running_var + self.eps)
+            out = self.gamma * xn + self.beta
+
+        return out
+
+    def backward(self, dout):
+        xc, xn, std, N = self.cache
+
+        # 計算對可學習參數 gamma 與 beta 的梯度 dgamma, dbeta
+        dgamma = np.sum(dout * xn, axis=0)
+        dbeta = np.sum(dout, axis=0)
+
+        # 套用簡化鏈鎖律公式計算對輸入 x 的梯度 dx
+        # dx = (gamma / (N * std)) * (N * dout - sum(dout) - xn * sum(dout * xn))
+        dx = (self.gamma / (N * std)) * (N * dout - np.sum(dout, axis=0) - xn * np.sum(dout * xn, axis=0))
+
+        return dx, dgamma, dbeta
 
 
 
