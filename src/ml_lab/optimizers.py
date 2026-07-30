@@ -24,8 +24,9 @@ def gradient_descent(f, init_x, lr=0.1, step_num=100):
 
 class Sgd:
     """隨機梯度下降法 (Stochastic Gradient Descent)"""
-    def __init__(self, lr=0.01):
+    def __init__(self, lr=0.01, weight_decay=0.0):
         self.lr = lr
+        self.weight_decay = weight_decay
         
     def update(self, params, grads):
         """
@@ -37,14 +38,21 @@ class Sgd:
             # ----------------------------------------------------------------
             # 依據 SGD 代數公式實作參數原地更新 (維持形狀守恆)
             # ----------------------------------------------------------------
-            params[key] -= self.lr * grads[key]
+            
+            # 僅對權重 W 施加衰減
+            decay_term = self.weight_decay * params[key] if 'W' in key else 0.0
+            grad_total = grads[key] + decay_term
+            
+            # 依據 SGD 代數公式實作參數原地更新
+            params[key] -= self.lr * grad_total
 
 
 class Momentum:
     """動量優化器 (Momentum Optimization)"""
-    def __init__(self, lr=0.01, decay=0.9):
+    def __init__(self, lr=0.01, decay=0.9, weight_decay=0.0):
         self.lr = lr
         self.decay = decay  # 動量衰減/阻力係數
+        self.weight_decay = weight_decay
         self.v = {}         # 儲存全域參數速度的字典
         
     def update(self, params, grads):
@@ -53,15 +61,18 @@ class Momentum:
                 self.v[key] = np.zeros_like(val)
                 
         for key in params.keys():
-            # 1. 舊速度打折（因摩擦力衰減）並疊加當前負梯度加速度
-            self.v[key] = self.decay * self.v[key] - self.lr * grads[key]
+            decay_term = self.weight_decay * params[key] if 'W' in key else 0.0
+            grad_total = grads[key] + decay_term
+            # 1. 舊速度打折（因摩擦力衰減）並疊加當前包含 Weight Decay 的負梯度加速度
+            self.v[key] = self.decay * self.v[key] - self.lr * grad_total
             # 2. 依據更新後的速度更新參數位置
             params[key] += self.v[key]
 
 class AdaGrad:
     """自適應學習率優化器 (Adaptive Gradient)"""
-    def __init__(self, lr=0.01):
+    def __init__(self, lr=0.01, weight_decay=0.0):
         self.lr = lr
+        self.weight_decay = weight_decay
         self.h = {}  # 儲存全域參數梯度平方和的字典 (形狀與參數完全守恆)
         
     def update(self, params, grads):
@@ -82,15 +93,21 @@ class AdaGrad:
             # 1. 點對點累加梯度的平方到 self.h[key]
             # 2. 計算自適應調整後的步長，並原地更新 params[key] (加上 1e-7 防止除以零)
             # ------------------------------------------------------------
-            self.h[key] += np.square(grads[key])
-            params[key] -= self.lr * grads[key] / (np.sqrt(self.h[key]) + 1e-7)
+            decay_term = self.weight_decay * params[key] if 'W' in key else 0.0
+            grad_total = grads[key] + decay_term
+
+            # 1. 點對點累加總梯度的平方到 self.h[key]
+            self.h[key] += np.square(grad_total)
+            # 2. 計算自適應調整後的步長，並原地更新 params[key]
+            params[key] -= self.lr * grad_total / (np.sqrt(self.h[key]) + 1e-7)
 
 class Adam:
     """終極完全體優化器 (Adam)"""
-    def __init__(self, lr=0.001, beta1=0.9, beta2=0.999):
+    def __init__(self, lr=0.001, beta1=0.9, beta2=0.999, weight_decay=0.0):
         self.lr = lr
         self.beta1 = beta1
         self.beta2 = beta2
+        self.weight_decay = weight_decay
         self.iter = 0  # 追蹤當前的迭代步數 t
         self.m = {}    # 一階矩緩衝字典 (速度)
         self.v = {}    # 二階矩緩衝字典 (憤怒值)
@@ -108,13 +125,12 @@ class Adam:
         lr_t = self.lr * np.sqrt(1.0 - self.beta2**self.iter) / (1.0 - self.beta1**self.iter)
         
         for key in params.keys():
-            # ------------------------------------------------------------
-            # 依據 Adam 公式更新一階矩 self.m 與二階矩 self.v
-            # ------------------------------------------------------------
-            self.m[key] = self.beta1 * self.m[key] + (1.0 - self.beta1) * grads[key]
-            self.v[key] = self.beta2 * self.v[key] + (1.0 - self.beta2) * np.square(grads[key])
+            decay_term = self.weight_decay * params[key] if 'W' in key else 0.0
+            grad_total = grads[key] + decay_term
             
-            # ------------------------------------------------------------
-            # 結合偏差修正項 lr_t，實作終極參數主權原地更新
-            # ------------------------------------------------------------
+            # 依據 Adam 公式更新一階矩 self.m 與二階矩 self.v
+            self.m[key] = self.beta1 * self.m[key] + (1.0 - self.beta1) * grad_total
+            self.v[key] = self.beta2 * self.v[key] + (1.0 - self.beta2) * np.square(grad_total)
+            
+            # 結合偏差修正項 lr_t，實作參數原地更新
             params[key] -= lr_t * self.m[key] / (np.sqrt(self.v[key]) + 1e-7)
