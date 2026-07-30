@@ -164,6 +164,31 @@ class BatchNormalization:
         return dx, dgamma, dbeta
 
 
+class Dropout:
+    """
+    Inverted Dropout 實作
+    """
+    def __init__(self, dropout_ratio=0.5):
+        self.dropout_ratio = dropout_ratio
+        self.mask = None
+
+    def forward(self, x, is_train=True):
+        if is_train:
+            # 生成伯努利隨機遮罩 mask
+            # 提示: 使用 np.random.rand(*x.shape) 生成 [0, 1) 的均勻分佈，並判斷是否大於 dropout_ratio
+            self.mask = np.random.rand(*x.shape) > self.dropout_ratio
+            
+            # 執行 Inverted Scaling 反向縮放前向傳播
+            # 提示: 將輸入 x 與 mask 逐元素相乘，並除以保留機率 (1 - self.dropout_ratio)
+            return (x * self.mask) / (1 - self.dropout_ratio)
+        else:
+            # 推論階段直接 Pass 輸出
+            return x
+
+    def backward(self, dout):
+        # 鏈鎖律反向傳播
+        # 沿用前向傳播保存的 self.mask，並除以 (1 - self.dropout_ratio)
+        return (dout * self.mask) / (1 - self.dropout_ratio)
 
         
 
