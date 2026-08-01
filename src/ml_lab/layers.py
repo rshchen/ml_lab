@@ -1,6 +1,7 @@
 import numpy as np
 from ml_lab.activations import sigmoid, relu, softmax
 from ml_lab.losses import cross_entropy_error
+from ml_lab.cnn import im2col, col2im
 
 class AffineLayer:
     def __init__(self):
@@ -190,5 +191,74 @@ class Dropout:
         # 沿用前向傳播保存的 self.mask，並除以 (1 - self.dropout_ratio)
         return (dout * self.mask) / (1 - self.dropout_ratio)
 
-        
+
+
+class Convolution:
+    """基於 im2col 與 col2im 的高效四維卷積層類別封裝"""
+
+    def __init__(self, weight: np.ndarray, bias: np.ndarray = None, stride: int = 1, padding: int = 0):
+        self.W = weight  # 形狀: (FN, C, FH, FW)
+        self.b = bias    # 形狀: (FN,)
+        self.stride = stride
+        self.padding = padding
+
+        # 前向傳播中間狀態快取 (用於反向傳播)
+        self.x = None
+        self.x_col = None
+        self.W_row = None
+
+        # 參數梯度快取
+        self.dW = None
+        self.db = None
+
+    def forward(self, x: np.ndarray) -> np.ndarray:
+        self.x = x
+        N, C, H, W = x.shape
+        FN, C_filter, FH, FW = self.W.shape
+
+        assert C == C_filter, f"Input channels ({C}) must match Filter channels ({C_filter})"
+
+        out_h = int((H + 2 * self.padding - FH) / self.stride) + 1
+        out_w = int((W + 2 * self.padding - FW) / self.stride) + 1
+
+        # TODO 1: 呼叫 im2col 將輸入張量矩陣化 -> self.x_col
+        self.x_col = im2col(x, FH, FW, self.stride, self.padding)
+
+        # TODO 2: 將權重矩陣化為二維列矩陣 -> self.W_row (FN, C * FH * FW)
+        self.W_row = self.W.reshape(FN, C * FH * FW)
+
+        # TODO 3: GEMM 矩陣乘法 (XW 模式) 並加總 bias
+        # 提示：Out_mat = X_col @ W_row.T + b
+        out_mat = self.x_col @ self.W_row.T
+        if self.b is not None:
+            out_mat += self.b
+
+        # TODO 4: 還原四維張量形狀 (N, FN, out_h, out_w)
+        # 提示：先 reshape(N, out_h, out_w, FN) 再 transpose(0, 3, 1, 2)
+        out = out_mat.reshape(N, out_h, out_w, FN).transpose(0, 3, 1, 2)
+        return out
+
+    def backward(self, dout: np.ndarray) -> np.ndarray:
+        FN, C, FH, FW = self.W.shape
+
+        # TODO 1: 轉置並展開上游傳回的梯度 dout -> dout_mat (N * out_h * out_w, FN)
+        # 提示：dout.transpose(0, 2, 3, 1).reshape(-1, FN)
+        dout_mat = dout.transpose(0, 2, 3, 1).reshape(-1, FN)
+
+        # TODO 2: 計算偏置梯度 db (對 Batch 與空間維度求和)
+        if self.b is not None:
+            self.db = np.sum(dout_mat, axis=0)
+
+        # TODO 3: 套用全連接層規則求權重矩陣梯度 dW_mat，並 reshape 為 (FN, C, FH, FW)
+        # 提示：dW_mat = dout_mat.T @ self.x_col
+        dW_mat = dout_mat.T @ self.x_col
+        self.dW = dW_mat.reshape(FN, C, FH, FW)
+
+        # TODO 4: 套用全連接層規則求輸入展開矩陣梯度 dx_col
+        # 提示：dx_col = dout_mat @ self.W_row
+        dx_col = dout_mat @ self.W_row
+
+        # TODO 5: 呼叫 col2im 還原並累加梯度回 dx
+        dx = col2im(dx_col, self.x.shape, FH, FW, self.stride, self.padding)
+        return dx
 
