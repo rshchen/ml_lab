@@ -262,3 +262,74 @@ class Convolution:
         dx = col2im(dx_col, self.x.shape, FH, FW, self.stride, self.padding)
         return dx
 
+
+class Pooling:
+    """基於 im2col 與 col2im 的四維池化層（支援 Max 與 Avg 模式）"""
+
+    def __init__(self, pool_h: int, pool_w: int, stride: int = 2, padding: int = 0, mode: str = 'max'):
+        self.pool_h = pool_h
+        self.pool_w = pool_w
+        self.stride = stride
+        self.padding = padding
+        self.mode = mode.lower()
+
+        assert self.mode in ['max', 'avg'], "Mode 必須為 'max' 或 'avg'"
+
+        self.x = None
+        self.arg_max = None
+
+    def forward(self, x: np.ndarray) -> np.ndarray:
+        self.x = x
+        N, C, H, W = x.shape
+
+        out_h = int((H + 2 * self.padding - self.pool_h) / self.stride) + 1
+        out_w = int((W + 2 * self.padding - self.pool_w) / self.stride) + 1
+
+        # TODO 1: 呼叫 im2col 將輸入張量展開 -> col (N * out_h * out_w, C * pool_h * pool_w)
+        col = im2col(x, self.pool_h, self.pool_w, self.stride, self.padding)
+
+        # TODO 2: 將通道獨立隔離，重構維度 -> col_reshaped (N * out_h * out_w * C, pool_h * pool_w)
+        # 提示：reshape 為 (-1, pool_h * pool_w)
+        col_reshaped = col.reshape(-1, self.pool_h * self.pool_w)
+
+        # TODO 3: 沿著視窗軸 (axis=1) 進行降維計算
+        # 若為 'max' 模式：計算最大值 out_flat 並記錄索引 self.arg_max (使用 np.argmax)
+        # 若為 'avg' 模式：計算平均值 out_flat (使用 np.mean)
+        if self.mode == 'max':
+            out_flat = np.max(col_reshaped, axis=1)
+            self.arg_max = np.argmax(col_reshaped, axis=1)
+        elif self.mode == 'avg':
+            out_flat = np.mean(col_reshaped, axis=1)
+
+        # TODO 4: 將降維後的結果還原為四維張量 (N, C, out_h, out_w)
+        # 提示：先 reshape(N, out_h, out_w, C) 再 transpose(0, 3, 1, 2)
+        out = out_flat.reshape(N, out_h, out_w, C).transpose(0, 3, 1, 2)
+        return out
+
+    def backward(self, dout: np.ndarray) -> np.ndarray:
+        N, C, H, W = self.x.shape
+        out_h = dout.shape[2]
+        out_w = dout.shape[3]
+
+        # TODO 1: 將上游傳回的梯度 dout 轉置並展平為一維陣列 -> dout_flat (N * out_h * out_w * C,)
+        # 提示：dout.transpose(0, 2, 3, 1).flatten()
+        dout_flat = dout.transpose(0, 2, 3, 1).flatten()
+
+        pool_size = self.pool_h * self.pool_w
+        dmax = np.zeros((dout_flat.size, pool_size), dtype=dout.dtype)
+        # TODO 2: 根據模式路由與分配梯度到 dmax 矩陣中
+        # 若為 'max' 模式：利用 self.arg_max 將 dout_flat 填入對應的最大值位置
+        # 若為 'avg' 模式：將 dout_flat 平均分配給池化視窗內的每一個點
+        if self.mode == 'max':
+            dmax[np.arange(self.arg_max.size), self.arg_max] = dout_flat
+        elif self.mode == 'avg':
+            dmax[:] = dout_flat[:, np.newaxis] / pool_size #這邊要切片複製才可以產生廣播
+
+        # TODO 3: 將 dmax 重構為 im2col 的輸出形狀 dcol (N * out_h * out_w, C * pool_size)
+        dcol = dmax.reshape(N * out_h * out_w, C * pool_size)
+
+        # TODO 4: 呼叫 col2im 還原梯度回 dx
+        dx = col2im(dcol, self.x.shape, self.pool_h, self.pool_w, self.stride, self.padding)
+        
+        return dx
+
