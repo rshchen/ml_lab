@@ -25,26 +25,24 @@ def numerical_gradient_array(f, x, h=1e-5):
 
 
 def test_convolution_gradient_check():
-    """使用數值梯度驗證 Convolution 層的反向傳播"""
+    """使用數值梯度驗證無狀態 Convolution 層的反向傳播"""
     np.random.seed(42)
 
     x = np.random.randn(2, 2, 4, 4)
     w = np.random.randn(2, 2, 3, 3)
     b = np.random.randn(2)
 
-    conv = Convolution(w, b, stride=1, padding=1)
+    conv = Convolution(stride=1, padding=1)
 
-    # 解析梯度 (Analytic Gradient)
-    out = conv.forward(x)
+    # 解析梯度 (Analytic Gradient) - 無狀態算子風格
+    out = conv.forward(x, w, b)
     dout = np.random.randn(*out.shape)
-    dx_analytic = conv.backward(dout)
-    dw_analytic = conv.dW
-    db_analytic = conv.db
+    dx_analytic, dw_analytic, db_analytic = conv.backward(dout)
 
     # 數值梯度 (Numerical Gradient)
-    f_x = lambda x_val: np.sum(conv.forward(x_val) * dout)
-    f_w = lambda w_val: np.sum(Convolution(w_val, b, stride=1, padding=1).forward(x) * dout)
-    f_b = lambda b_val: np.sum(Convolution(w, b_val, stride=1, padding=1).forward(x) * dout)
+    f_x = lambda x_val: np.sum(conv.forward(x_val, w, b) * dout)
+    f_w = lambda w_val: np.sum(Convolution(stride=1, padding=1).forward(x, w_val, b) * dout)
+    f_b = lambda b_val: np.sum(Convolution(stride=1, padding=1).forward(x, w, b_val) * dout)
 
     dx_numerical = numerical_gradient_array(f_x, x)
     dw_numerical = numerical_gradient_array(f_w, w)
@@ -62,7 +60,7 @@ def test_convolution_gradient_check():
     assert rel_error_dx < 1e-4, "dx 梯度檢查失敗！"
     assert rel_error_dw < 1e-4, "dW 梯度檢查失敗！"
     assert rel_error_db < 1e-4, "db 梯度檢查失敗！"
-    print("卷積層反向傳播數值梯度檢查全數通過！")
+    print("無狀態卷積層反向傳播數值梯度檢查全數通過！")
 
 
 if __name__ == "__main__":

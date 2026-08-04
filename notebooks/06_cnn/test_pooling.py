@@ -44,7 +44,7 @@ def test_max_pooling_forward_value():
     ]])
 
     assert np.allclose(out, expected_out), f"Max Pooling 前向傳播數值不符，得到:\n{out}"
-    print("Max Pooling 前向傳播數值測試通過！")
+    print("✓ Max Pooling 前向傳播數值測試通過！")
 
 
 def test_avg_pooling_forward_value():
@@ -68,7 +68,7 @@ def test_avg_pooling_forward_value():
     ]])
 
     assert np.allclose(out, expected_out), f"Avg Pooling 前向傳播數值不符，得到:\n{out}"
-    print("Avg Pooling 前向傳播數值測試通過！")
+    print("✓ Avg Pooling 前向傳播數值測試通過！")
 
 
 def test_pooling_gradient_check():
@@ -88,7 +88,7 @@ def test_pooling_gradient_check():
         np.abs(dx_analytic_max - dx_numerical_max) / (np.abs(dx_analytic_max) + np.abs(dx_numerical_max) + 1e-8)
     )
     assert rel_error_max < 1e-4, f"Max Pooling 反向傳播梯度檢查失敗，相對誤差: {rel_error_max}"
-    print(f"Max Pooling 反向傳播梯度檢查通過，相對誤差: {rel_error_max:.2e}")
+    print(f"✓ Max Pooling 反向傳播梯度檢查通過，相對誤差: {rel_error_max:.2e}")
 
     # Avg Pooling 梯度檢查
     pool_avg = Pooling(pool_h=2, pool_w=2, stride=2, mode='avg')
@@ -103,7 +103,8 @@ def test_pooling_gradient_check():
         np.abs(dx_analytic_avg - dx_numerical_avg) / (np.abs(dx_analytic_avg) + np.abs(dx_numerical_avg) + 1e-8)
     )
     assert rel_error_avg < 1e-4, f"Avg Pooling 反向傳播梯度檢查失敗，相對誤差: {rel_error_avg}"
-    print(f"Avg Pooling 反向傳播梯度檢查通過，相對誤差: {rel_error_avg:.2e}")
+    print(f"✓ Avg Pooling 反向傳播梯度檢查通過，相對誤差: {rel_error_avg:.2e}")
+
 
 if __name__ == "__main__":
     test_max_pooling_forward_value()
